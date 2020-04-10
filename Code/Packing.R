@@ -2,6 +2,9 @@
 library(tidyverse)
 source("./Code/UtilityFunctions.r")
 
+#Should the scrip plot a visual test? If not change plotting to FALSE
+plotting=TRUE
+
 #Load in data
 events=read.csv("./Input/Sample_Game_1_RawEventsData.csv")
 trackingData=readRDS("./Input/metrica_tracking_tidy.rds") %>% 
@@ -47,8 +50,8 @@ r=createOutline()+
 
 library(grid)
 library(gridExtra)
-
-grid.arrange(p,r,nrow=2)
+if(plotting==T){
+grid.arrange(p,r,nrow=2)}
 
 #Packing calculation
 
@@ -85,5 +88,3 @@ packingDataAfter=trackingData %>%
 passesWithPacking=merge(passes,merge(packingDataBefore,packingDataAfter, by="passId"), by="passId") %>% 
   mutate(packing=behindBallStart-behindBallEnd,
          ratioOfDefendersRemoved=1-ifelse(behindBallStart==0,0,(behindBallEnd/behindBallStart)))
-
-
