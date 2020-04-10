@@ -1,5 +1,6 @@
 # MAKWERK_TRACKING
 Tracking data in R:
+
 Rather than look at a voronoi diagram the included script will set up a simple implementation of "Packing"
 The usefulness of this metric can be debated.
 
