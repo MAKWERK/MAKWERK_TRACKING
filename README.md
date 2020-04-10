@@ -2,8 +2,8 @@
 Tracking data in R
 
 Tracking data pre-processing done by Eliot McKinley - @etmckinley on Twitter
-Included are a script with a brief intro to Tidyverse, but others have made much better intros than I ever will for example:
 
+Included are a script with a brief intro to Tidyverse, but others have made much better intros than I ever will for example:
 https://hockey-graphs.com/2019/12/11/an-introduction-to-r-with-hockey-data/ from Meghan Hall - @MeghanMHall on Twitter
 
 
