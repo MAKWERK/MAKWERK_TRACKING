@@ -24,7 +24,8 @@ direction=trackingData %>% filter(team!="Ball") %>%
 #Find passes in events
 passes=events %>% 
   filter(Type=="PASS"| (Type=="BALL LOST" & Subtype=="INTERCEPTION")) %>% 
-  select(team=Team, period=Period, event=Type, passer=From, receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
+  select(team=Team, period=Period, event=Type, passer=From, 
+         receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
          startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% 
   mutate(team=tolower(team), passId=1, passId=cumsum(passId))
 
@@ -53,10 +54,9 @@ library(gridExtra)
 if(plotting==T){
 grid.arrange(p,r,nrow=2)}
 
-#Packing calculation
+#Packing calculation - the 105, 68 and 34 comes from the dimension of a standard football pitch in meters
 
 packingPasses=passes %>%
-  #filter(startFrame==passes$startFrame[testPass]) %>% 
   merge(.,direction, by=c("period","team")) %>% 
   mutate(oppGoalLine=ifelse(direction==1,1,0),
          distToOppGoalStart=sqrt((startX*105-oppGoalLine*105)^2+(startY*68-34)^2),
@@ -64,7 +64,6 @@ packingPasses=passes %>%
 
 packingDataBefore=trackingData %>%
   filter(frame %in% c(passes$startFrame)) %>% 
-  #filter(frame==passes$startFrame[testPass]) %>% 
   merge(.,direction, by=c("period","team")) %>% 
   mutate(ownGoalLine=ifelse(direction==1,0,1),
          distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
@@ -75,7 +74,6 @@ packingDataBefore=trackingData %>%
 
 packingDataAfter=trackingData %>%
   filter(frame %in% c(passes$endFrame)) %>% 
-  #filter(frame==passes$endFrame[testPass]) %>% 
   merge(.,direction, by=c("period","team")) %>% 
   mutate(ownGoalLine=ifelse(direction==1,0,1),
          distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
