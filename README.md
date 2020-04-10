@@ -2,6 +2,7 @@
 Tracking data in R:
 
 Rather than look at a voronoi diagram the included script will set up a simple implementation of "Packing"
+
 The usefulness of this metric can be debated.
 
 Tracking data pre-processing done by Eliot McKinley - @etmckinley on Twitter
