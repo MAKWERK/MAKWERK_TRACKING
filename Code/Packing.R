@@ -86,3 +86,5 @@ packingDataAfter=trackingData %>%
 passesWithPacking=merge(passes,merge(packingDataBefore,packingDataAfter, by="passId"), by="passId") %>% 
   mutate(packing=behindBallStart-behindBallEnd,
          ratioOfDefendersRemoved=1-ifelse(behindBallStart==0,0,(behindBallEnd/behindBallStart)))
+
+#Questions: How do we handle unsuccessful passes?
