@@ -1,0 +1,89 @@
+#Loading libraries
+library(tidyverse)
+source("./Code/UtilityFunctions.r")
+
+#Load in data
+events=read.csv("./Input/Sample_Game_1_RawEventsData.csv")
+trackingData=readRDS("./Input/metrica_tracking_tidy.rds") %>% 
+  filter(game_id==1 & !is.nan(x)) #We remove game 2 and all players not on the pitch
+
+direction=trackingData %>% filter(team!="Ball") %>% 
+  group_by(period) %>%
+  arrange(period, frame) %>% 
+  filter(frame==first(frame)) %>% 
+  mutate(x=x-0.5) %>% 
+  group_by(period,team) %>%
+  summarise(x=mean(x)) %>% 
+  mutate(direction=ifelse(x>0,0,1)) %>% 
+  select(period, team, direction)
+
+
+#Find passes in events
+passes=events %>% 
+  filter(Type=="PASS"| (Type=="BALL LOST" & Subtype=="INTERCEPTION")) %>% 
+  select(team=Team, period=Period, event=Type, passer=From, receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
+         startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% 
+  mutate(team=tolower(team), passId=1, passId=cumsum(passId))
+
+#Visual Test
+testPass=105
+
+passingFrame=trackingData %>% 
+  filter(period==passes$period[testPass] & frame==passes$startFrame[testPass]) 
+
+p=createOutline()+
+  geom_point(data=passingFrame, aes(x,y), 
+             col=ifelse(passingFrame$team=="Ball", "orange",ifelse(passingFrame$team=="home","steelblue","red")),
+             cex=ifelse(passingFrame$team=="Ball",3,5))
+  
+
+receivingFrame=trackingData %>% 
+  filter(period==passes$period[testPass] & frame==passes$endFrame[testPass]) 
+
+r=createOutline()+
+  geom_point(data=receivingFrame,aes(x,y), 
+             col=ifelse(passingFrame$team=="Ball", "orange",ifelse(passingFrame$team=="home","steelblue","red")),
+             cex=ifelse(passingFrame$team=="Ball",3,5))
+
+library(grid)
+library(gridExtra)
+
+grid.arrange(p,r,nrow=2)
+
+#Packing calculation
+
+packingPasses=passes %>%
+  #filter(startFrame==passes$startFrame[testPass]) %>% 
+  merge(.,direction, by=c("period","team")) %>% 
+  mutate(oppGoalLine=ifelse(direction==1,1,0),
+         distToOppGoalStart=sqrt((startX*105-oppGoalLine*105)^2+(startY*68-34)^2),
+         distToOppGoalEnd=sqrt((endX*105-oppGoalLine*105)^2+(endY*68-34)^2))
+
+packingDataBefore=trackingData %>%
+  filter(frame %in% c(passes$startFrame)) %>% 
+  #filter(frame==passes$startFrame[testPass]) %>% 
+  merge(.,direction, by=c("period","team")) %>% 
+  mutate(ownGoalLine=ifelse(direction==1,0,1),
+         distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
+  merge(.,packingPasses %>% select(frame=startFrame, passId, distToOppGoalStart, passingTeam=team), by="frame", all=T) %>% 
+  filter(passingTeam!=team) %>% 
+  group_by(passId) %>% 
+  summarise(behindBallStart=sum(ifelse(distToOwnGoal<distToOppGoalStart,1,0)))
+
+packingDataAfter=trackingData %>%
+  filter(frame %in% c(passes$endFrame)) %>% 
+  #filter(frame==passes$endFrame[testPass]) %>% 
+  merge(.,direction, by=c("period","team")) %>% 
+  mutate(ownGoalLine=ifelse(direction==1,0,1),
+         distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
+  merge(.,packingPasses %>% select(frame=endFrame, passId, distToOppGoalEnd, passingTeam=team), by="frame", all=T) %>% 
+  filter(passingTeam!=team) %>% 
+  group_by(passId) %>% 
+  summarise(behindBallEnd=sum(ifelse(distToOwnGoal<distToOppGoalEnd,1,0)))
+
+
+passesWithPacking=merge(passes,merge(packingDataBefore,packingDataAfter, by="passId"), by="passId") %>% 
+  mutate(packing=behindBallStart-behindBallEnd,
+         ratioOfDefendersRemoved=1-ifelse(behindBallStart==0,0,(behindBallEnd/behindBallStart)))
+
+
