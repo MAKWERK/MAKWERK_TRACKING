@@ -2,7 +2,7 @@
 library(tidyverse)
 source("./Code/UtilityFunctions.r")
 
-#Should the scrip plot a visual test? If not change plotting to FALSE
+#Should the script plot a visual test? If not change plotting to FALSE
 plotting=TRUE
 
 #Load in data
