@@ -8,6 +8,7 @@ https://hockey-graphs.com/2019/12/11/an-introduction-to-r-with-hockey-data/ from
 
 
 Overall the scripts are not optimized for speed or memory.
+
 But rather written so that all steps are "readable" to people starting out.
 
 Packages needed:
