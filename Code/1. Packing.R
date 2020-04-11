@@ -41,7 +41,7 @@ passingFrame=trackingData %>%
 p=createOutline()+
   geom_point(data=passingFrame, aes(x,y), 
              col=ifelse(passingFrame$team=="Ball", "orange",ifelse(passingFrame$team=="home","steelblue","red")),
-             cex=ifelse(passingFrame$team=="Ball",3,5))
+             cex=ifelse(passingFrame$team=="Ball",1,3))
   
 
 receivingFrame=trackingData %>% 
@@ -49,8 +49,8 @@ receivingFrame=trackingData %>%
 
 r=createOutline()+
   geom_point(data=receivingFrame,aes(x,y), 
-             col=ifelse(passingFrame$team=="Ball", "orange",ifelse(passingFrame$team=="home","steelblue","red")),
-             cex=ifelse(passingFrame$team=="Ball",3,5))
+             col=ifelse(receivingFrame$team=="Ball", "orange",ifelse(receivingFrame$team=="home","steelblue","red")),
+             cex=ifelse(receivingFrame$team=="Ball",1,3))
 
 library(grid)
 library(gridExtra)
