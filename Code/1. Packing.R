@@ -13,14 +13,15 @@ trackingData=readRDS("./Input/metrica_tracking_tidy.rds") %>%
   filter(game_id==1 & !is.nan(x)) #We remove game 2 and all players not on the pitch
 
 #Caculate the playing direction of each team
+  #Done by looking at the values of x for each team when normalized around the halfway line
 direction=trackingData %>% filter(team!="Ball") %>% 
   group_by(period) %>%
   arrange(period, frame) %>% 
   filter(frame==first(frame)) %>% 
-  mutate(x=x-0.5) %>% 
+  mutate(x=x-0.5) %>% #Normalizing around halfway line
   group_by(period,team) %>%
-  summarise(x=mean(x)) %>% 
-  mutate(direction=ifelse(x>0,0,1)) %>% 
+  summarise(x=mean(x)) %>% #Team centoids
+  mutate(direction=ifelse(x>0,0,1)) %>% #If negative then positive direction and vice-versa
   select(period, team, direction)
 
 
@@ -29,33 +30,36 @@ passes=events %>%
   filter(Type=="PASS"| (Type=="BALL LOST" & Subtype=="INTERCEPTION")) %>% 
   select(team=Team, period=Period, event=Type, passer=From, 
          receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
-         startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% 
-  mutate(team=tolower(team), passId=1, passId=cumsum(passId))
+         startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% #Rename to perfeered standard
+  mutate(team=tolower(team), passId=1, passId=cumsum(passId)) #Lowercase team to fit with tracking data format and add passId
 
 #Visual Test
 testPass=105
 
+#Create plotting datasets
 passingFrame=trackingData %>% 
   filter(period==passes$period[testPass] & frame==passes$startFrame[testPass]) 
+receivingFrame=trackingData %>% 
+  filter(period==passes$period[testPass] & frame==passes$endFrame[testPass]) 
 
+#Plot p(assingframe) and r(ecptionframe) - col is color based on team and cex scales the points, here ball is smaller than players
 p=createOutline()+
   geom_point(data=passingFrame, aes(x,y), 
              col=ifelse(passingFrame$team=="Ball", "orange",ifelse(passingFrame$team=="home","steelblue","red")),
              cex=ifelse(passingFrame$team=="Ball",1,3))
-  
-
-receivingFrame=trackingData %>% 
-  filter(period==passes$period[testPass] & frame==passes$endFrame[testPass]) 
 
 r=createOutline()+
   geom_point(data=receivingFrame,aes(x,y), 
              col=ifelse(receivingFrame$team=="Ball", "orange",ifelse(receivingFrame$team=="home","steelblue","red")),
              cex=ifelse(receivingFrame$team=="Ball",1,3))
 
+#gird/gridExtra are nice to have but not essentials, for arranging plots
 library(grid)
 library(gridExtra)
 if(plotting==T){
 grid.arrange(p,r,nrow=2)}
+
+
 
 #Packing calculation - the 105, 68 and 34 comes from the dimension of a standard football pitch in meters
 
@@ -71,7 +75,8 @@ packingDataBefore=trackingData %>%
   filter(frame %in% c(passes$startFrame)) %>% 
   merge(.,direction, by=c("period","team")) %>% 
   mutate(ownGoalLine=ifelse(direction==1,0,1),
-         distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
+         distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>%
+  #Merge with passes to get info on passing team and ball distance to goal
   merge(.,packingPasses %>% select(frame=startFrame, passId, distToOppGoalStart, passingTeam=team), by="frame", all=T) %>% 
   filter(passingTeam!=team) %>% 
   group_by(passId) %>% 
@@ -83,6 +88,7 @@ packingDataAfter=trackingData %>%
   merge(.,direction, by=c("period","team")) %>% 
   mutate(ownGoalLine=ifelse(direction==1,0,1),
          distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
+  #Merge with passes to get info on reception team and ball distance to goal
   merge(.,packingPasses %>% select(frame=endFrame, passId, distToOppGoalEnd, passingTeam=team), by="frame", all=T) %>% 
   filter(passingTeam!=team) %>% 
   group_by(passId) %>% 
