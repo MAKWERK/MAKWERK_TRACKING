@@ -1,5 +1,7 @@
 #Loading libraries
 library(tidyverse)
+
+#Load utility functions, currently only pitch outline
 source("./Code/UtilityFunctions.r")
 
 #Should the script plot a visual test? If not change plotting to FALSE
@@ -10,6 +12,7 @@ events=read.csv("./Input/Sample_Game_1_RawEventsData.csv")
 trackingData=readRDS("./Input/metrica_tracking_tidy.rds") %>% 
   filter(game_id==1 & !is.nan(x)) #We remove game 2 and all players not on the pitch
 
+#Caculate the playing direction of each team
 direction=trackingData %>% filter(team!="Ball") %>% 
   group_by(period) %>%
   arrange(period, frame) %>% 
@@ -56,12 +59,14 @@ grid.arrange(p,r,nrow=2)}
 
 #Packing calculation - the 105, 68 and 34 comes from the dimension of a standard football pitch in meters
 
+#First, for each pass calculate the distance to the goal
 packingPasses=passes %>%
   merge(.,direction, by=c("period","team")) %>% 
   mutate(oppGoalLine=ifelse(direction==1,1,0),
          distToOppGoalStart=sqrt((startX*105-oppGoalLine*105)^2+(startY*68-34)^2),
          distToOppGoalEnd=sqrt((endX*105-oppGoalLine*105)^2+(endY*68-34)^2))
 
+#Then for each starting frame calculate each players distance to own goal
 packingDataBefore=trackingData %>%
   filter(frame %in% c(passes$startFrame)) %>% 
   merge(.,direction, by=c("period","team")) %>% 
@@ -72,6 +77,7 @@ packingDataBefore=trackingData %>%
   group_by(passId) %>% 
   summarise(behindBallStart=sum(ifelse(distToOwnGoal<distToOppGoalStart,1,0)))
 
+#Same for each end frame
 packingDataAfter=trackingData %>%
   filter(frame %in% c(passes$endFrame)) %>% 
   merge(.,direction, by=c("period","team")) %>% 
@@ -83,8 +89,11 @@ packingDataAfter=trackingData %>%
   summarise(behindBallEnd=sum(ifelse(distToOwnGoal<distToOppGoalEnd,1,0)))
 
 
+#Merge the two results with the dataframe containing passes and calculate Packing as the number of defenders played past and
+# the ratio of defenders removed by pass.
 passesWithPacking=merge(passes,merge(packingDataBefore,packingDataAfter, by="passId"), by="passId") %>% 
   mutate(packing=behindBallStart-behindBallEnd,
          ratioOfDefendersRemoved=1-ifelse(behindBallStart==0,0,(behindBallEnd/behindBallStart)))
 
-#Questions: How do we handle unsuccessful passes?
+#Question to be solved: How do we score unsuccessful passes?
+#Analysis question: Is ratio of defenders removed better than packing? Does the context added matter?
