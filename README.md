@@ -1,9 +1,9 @@
 # MAKWERK_TRACKING
 Tracking data in R:
 
-Rather than look at a voronoi diagram the included script will set up a simple implementation of "Packing"
+Rather than look at a voronoi diagram the included script will set up a simple implementation of "Packing", a simple implementation of "Pressure" and futher analysis combining the two in time.
 
-The usefulness of this metric can be debated.
+The definitions and usefullness of these metrics can be debated.
 
 Tracking data pre-processing done by Eliot McKinley - @etmckinley on Twitter
 
