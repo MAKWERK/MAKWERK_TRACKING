@@ -56,10 +56,11 @@ addVelocitiesRaw <- function(data,dim1,dim2,timeDiff=0.4){
   data$vy=vel$vy
   data$speed=vel$speed
   return(data)
-  #Need to implement player and period coloum arguments
+  #Need to implement player and period coloum arguments, aswell as dynamic time difference
 }
 
 addVelocitiesSGF <- function(data,dim1,dim2, window=7,polyorder=1,timeDiff=0.4){
+  #paramters chosen to match Laurie from FOT
   vel=data %>% group_by(player, period) %>% 
     mutate(x=sgolayfilt(x,p=polyorder,n=window),y=sgolayfilt(y,p=polyorder,n=window)) %>% 
     mutate(vx=x-lag(x)/timeDiff, vy=y-lag(y)/timeDiff, speed=sqrt(vx^2+vy^2)) %>% ungroup() %>% select(vx,vy, speed)
@@ -67,6 +68,6 @@ addVelocitiesSGF <- function(data,dim1,dim2, window=7,polyorder=1,timeDiff=0.4){
   data$vy=vel$vy
   data$speed=vel$speed
   return(data)
-  #Need to implement player and period coloum arguments
+  #Need to implement player and period coloum arguments, aswell as dynamic time difference
 }
 
