@@ -1,5 +1,6 @@
 library(tidyverse)
 library(ggforce)
+library(signal)
 
 createOutline <- function(){
   o=ggplot()+
@@ -47,5 +48,23 @@ createOutline <- function(){
     coord_fixed()+
     theme_void()
   return(o)
+}
+
+addVelocitiesRaw <- function(data,dim1,dim2, window=7,polyorder=1){
+  vel=data %>% group_by(player, period) %>% mutate(vx=x-lag(x), vy=y-lag(y), speed=sqrt(vx^2+vy^2)) %>% ungroup() %>% select(vx,vy, speed)
+  data$vx=vel$vx
+  data$vy=vel$vy
+  data$speed=vel$speed
+  return(data)
+}
+
+addVelocitiesSGF <- function(data,dim1,dim2, window=7,polyorder=1){
+  vel=data %>% group_by(player, period) %>% 
+    mutate(x=sgolayfilt(x,p=polyorder,n=window),y=sgolayfilt(y,p=polyorder,n=window)) %>% 
+    mutate(vx=x-lag(x), vy=y-lag(y), speed=sqrt(vx^2+vy^2)) %>% ungroup() %>% select(vx,vy, speed)
+  data$vx=vel$vx
+  data$vy=vel$vy
+  data$speed=vel$speed
+  return(data)
 }
 
