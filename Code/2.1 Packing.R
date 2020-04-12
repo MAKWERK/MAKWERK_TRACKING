@@ -1,7 +1,7 @@
 #Loading libraries
 library(tidyverse)
 
-#Load utility functions, currently only pitch outline
+#Load utility functions
 source("./Code/UtilityFunctions.r")
 
 #Should the script plot a visual test? If not change plotting to FALSE
@@ -31,7 +31,7 @@ passes=events %>%
   filter(Type=="PASS"| (Type=="BALL LOST" & Subtype=="INTERCEPTION")) %>% 
   select(team=Team, period=Period, event=Type, passer=From, 
          receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
-         startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% #Rename to perfeered standard
+         startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% #Rename to convention
   mutate(team=tolower(team), passId=1, passId=cumsum(passId), #Lowercase team to fit with tracking data format and add passId
          startX=startX*105,startY=startY*68,endX=endX*105,endY=endY*68) #Convert to meter scale
 
