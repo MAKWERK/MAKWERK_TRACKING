@@ -10,15 +10,16 @@ plotting=TRUE
 #Load in data
 events=read.csv("./Input/Sample_Game_1_RawEventsData.csv")
 trackingData=readRDS("./Input/metrica_tracking_tidy.rds") %>% 
-  filter(game_id==1 & !is.nan(x)) #We remove game 2 and all players not on the pitch
-
+  filter(game_id==1 & !is.nan(x)) %>% #We remove game 2 and all players not on the pitch
+  mutate(x=x*105,y=y*68) #Convert to meter scale
+  
 #Caculate the playing direction of each team
   #Done by looking at the values of x for each team when normalized around the halfway line
 direction=trackingData %>% filter(team!="Ball") %>% 
   group_by(period) %>%
   arrange(period, frame) %>% 
   filter(frame==first(frame)) %>% 
-  mutate(x=x-0.5) %>% #Normalizing around halfway line
+  mutate(x=x-52.5) %>% #Normalizing around halfway line
   group_by(period,team) %>%
   summarise(x=mean(x)) %>% #Team centoids
   mutate(direction=ifelse(x>0,0,1)) %>% #If negative then positive direction and vice-versa
@@ -31,10 +32,11 @@ passes=events %>%
   select(team=Team, period=Period, event=Type, passer=From, 
          receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
          startX=Start.X,endX=End.X, startY=Start.Y, endY=End.Y) %>% #Rename to perfeered standard
-  mutate(team=tolower(team), passId=1, passId=cumsum(passId)) #Lowercase team to fit with tracking data format and add passId
+  mutate(team=tolower(team), passId=1, passId=cumsum(passId), #Lowercase team to fit with tracking data format and add passId
+         startX=startX*105,startY=startY*68,endX=endX*105,endY=endY*68) #Convert to meter scale
 
 #Visual Test
-testPass=105
+testPass=10
 
 #Create plotting datasets
 passingFrame=trackingData %>% 
@@ -66,16 +68,16 @@ grid.arrange(p,r,nrow=2)}
 #First, for each pass calculate the distance to the goal
 packingPasses=passes %>%
   merge(.,direction, by=c("period","team")) %>% 
-  mutate(oppGoalLine=ifelse(direction==1,1,0),
-         distToOppGoalStart=sqrt((startX*105-oppGoalLine*105)^2+(startY*68-34)^2),
-         distToOppGoalEnd=sqrt((endX*105-oppGoalLine*105)^2+(endY*68-34)^2))
+  mutate(oppGoalLine=ifelse(direction==1,105,0),
+         distToOppGoalStart=sqrt((startX-oppGoalLine)^2+(startY-34)^2),
+         distToOppGoalEnd=sqrt((endX-oppGoalLine)^2+(endY-34)^2))
 
 #Then for each starting frame calculate each players distance to own goal
 packingDataBefore=trackingData %>%
   filter(frame %in% c(passes$startFrame)) %>% 
   merge(.,direction, by=c("period","team")) %>% 
-  mutate(ownGoalLine=ifelse(direction==1,0,1),
-         distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>%
+  mutate(ownGoalLine=ifelse(direction==1,0,105),
+         distToOwnGoal=sqrt((x-ownGoalLine)^2+(y-34)^2)) %>%
   #Merge with passes to get info on passing team and ball distance to goal
   merge(.,packingPasses %>% select(frame=startFrame, passId, distToOppGoalStart, passingTeam=team), by="frame", all=T) %>% 
   filter(passingTeam!=team) %>% 
@@ -86,8 +88,8 @@ packingDataBefore=trackingData %>%
 packingDataAfter=trackingData %>%
   filter(frame %in% c(passes$endFrame)) %>% 
   merge(.,direction, by=c("period","team")) %>% 
-  mutate(ownGoalLine=ifelse(direction==1,0,1),
-         distToOwnGoal=sqrt((x*105-ownGoalLine*105)^2+(y*68-34)^2)) %>% 
+  mutate(ownGoalLine=ifelse(direction==1,0,105),
+         distToOwnGoal=sqrt((x-ownGoalLine)^2+(y-34)^2)) %>% 
   #Merge with passes to get info on reception team and ball distance to goal
   merge(.,packingPasses %>% select(frame=endFrame, passId, distToOppGoalEnd, passingTeam=team), by="frame", all=T) %>% 
   filter(passingTeam!=team) %>% 
