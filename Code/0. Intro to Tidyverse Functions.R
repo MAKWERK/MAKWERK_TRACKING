@@ -22,15 +22,15 @@ rm(passes)
 
 #Lets count the successful passes for each player!
 
-passesPerPlayer=events %>% 
+passesPerTeam=events %>% 
   filter(Type=="PASS") %>% 
   group_by(Team, From) %>% 
   summarise(count=n())
 
 #Breaking down the code again:
-  # Count the rows for each value of "Team" and "From" where Type is PASS in data frame events and save it in a data frame named passesPerPlayer
+  # Count the rows for each value of "Team" and "From" where Type is PASS in data frame events and save it in a data frame named passesPerTeam
 
-rm(passesPerPlayer)
+rm(passesPerTeam)
 
 
 #Lets calculated the accuracy for each player!
@@ -42,6 +42,7 @@ passingAccuracy=events %>%
   mutate(accuracy=successful/passes)
 
 #Lets just break down the new things:
+  # The | operator reads as "OR" in R syntax - so here Type equals pass OR Type equals ball lost and subtype equals interception
   # Mutate lets you create new variables, here we calculate accuracy by dividing successful passes with the total number of passes made
   # ifelse lets you state the outcome based on a logical test - here we set the value to 1 if Type is PASS else we set it to 0
   # sum lets you, as the name suggest sum values - again here we use group_by so for each value of Team and From we sum up the values created by the ifelse function
