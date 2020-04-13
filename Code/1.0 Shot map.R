@@ -17,6 +17,23 @@ allShots=events %>%
   mutate(team=tolower(team), #Lowercase team to fit with tracking data format
          startX=startX*105,startY=startY*68,endX=endX*105,endY=endY*68) #Convert to meter scale
 
+#Lets now plot a dead simple shot map - using the "createOutline()" function to get a pitch
+#And adding the shots as points with geom_point
+
+simpleTeamShotMap=createOutline()+
+  geom_point(data=allShots,aes(x=startX,y=startY))
+
+print(simpleTeamShotMap)
+
+#Lets add some colour based on the team
+
+simpleTeamShotMap=createOutline()+
+  geom_point(data=allShots,aes(x=startX,y=startY),
+             col=ifelse(allShots$team=="home","steelblue","red"))
+
+print(simpleTeamShotMap)
+
+
 #Lets make sure the home team a trying to score to the right and the away team are trying to score to the left
 #For this data set, teams changes half during halftime, this is not the stadard in other data sets, so be sure to check!
 
@@ -25,22 +42,6 @@ shotsHA=allShots %>%
          startY=ifelse(period==2,68-startY,startY),
          endX=ifelse(period==2,105-endX,endX),
          endY=ifelse(period==2,68-endY,endY))
-
-#Lets now plot a dead simple shot map - using the "createOutline()" function to get a pitch
-#And adding the shots as points with geom_point
-
-simpleTeamShotMap=createOutline()+
-  geom_point(data=shotsHA,aes(x=startX,y=startY))
-
-print(simpleTeamShotMap)
-
-#Lets add some colour based on the team
-
-simpleTeamShotMap=createOutline()+
-  geom_point(data=shotsHA,aes(x=startX,y=startY),
-             col=ifelse(shotsHA$team=="home","steelblue","red"))
-
-print(simpleTeamShotMap)
 
 #We can also use another shape to get a small halo
 
