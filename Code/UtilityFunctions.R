@@ -4,6 +4,8 @@ library(ggforce)
 
 createOutline <- function(){
   o=ggplot()+
+    xlim(-10,115)+
+    ylim(-10,78)+
     #Touch and goal lines
     geom_segment(aes(x=0,xend=105,y=0,yend=0))+
     geom_segment(aes(x=0,xend=0,y=0,yend=68))+
