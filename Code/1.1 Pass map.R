@@ -91,12 +91,14 @@ playerPasses=passes %>% filter(passer==sample(unique(passes$passer),1)) %>%
          shotY=ifelse(period==2,68-shotY,shotY))
 
 #Now lets add a halo for all keypasses and a circle marking the position of resulting shots
+#Due to more than one shot from the same location I have added a shot counter for location with more than one shot
 simplePassMap=createOutline()+
   geom_segment(data=playerPasses,aes(x=startX,y=startY,xend=endX,yend=endY),
                col=ifelse(playerPasses$event=="PASS","steelblue","orange"))+
-  geom_point(data=playerPasses %>% filter(keypass==1),aes(x=startX,y=startY),cex=3)+
-  geom_point(data=playerPasses %>% filter(keypass==1),aes(x=shotX,y=shotY),cex=3, pch=1)+
-  geom_point(data=playerPasses,aes(x=startX,y=startY),pch=21,cex=2,
+  geom_point(data=playerPasses %>% filter(keypass==1),aes(x=startX,y=startY),cex=5)+
+  geom_point(data=playerPasses %>% filter(keypass==1),aes(x=shotX,y=shotY),cex=5, pch=21, fill="white")+
+  geom_text(data=playerPasses %>% filter(keypass==1) %>% group_by(shotX,shotY) %>% count() %>% filter(n>1),aes(x=shotX,y=shotY, label=n),cex=3)+
+  geom_point(data=playerPasses,aes(x=startX,y=startY),pch=21,cex=3,
              fill=ifelse(playerPasses$event=="PASS","steelblue","orange"))+
   geom_text(aes(x=ifelse(unique(playerPasses$team)=="home",2,103),y=-2, label=str_to_title(unique(playerPasses$team))),
             col="steelblue",cex=5)
