@@ -101,4 +101,6 @@ simplePassMap=createOutline()+
   geom_text(aes(x=ifelse(unique(playerPasses$team)=="home",2,103),y=-2, label=str_to_title(unique(playerPasses$team))),
             col="steelblue",cex=5)
 
-print(simplePassMap) #One pass has no end coordinates - hence no segement is drawn
+print(simplePassMap) 
+#One pass has no end coordinates - hence no segement is drawn
+#Another curious thing is that 2 shots are taking place at the same coordinate hence only 4 shot markers from 5 keypasses
