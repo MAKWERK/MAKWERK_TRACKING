@@ -10,7 +10,7 @@ events=read.csv("./Input/Sample_Game_1_RawEventsData.csv")
 #We will attempt to assign players to clusters based on their avg pass position
 #This will proxy as position and context in future scripts
 
-passes=events %>% 
+avgPassPos=events %>% 
   filter(Type=="PASS"| (Type=="BALL LOST" & Subtype=="INTERCEPTION")) %>% 
   select(team=Team, period=Period, event=Type, passer=From, 
          receiver=To, startFrame=Start.Frame, endFrame=End.Frame,
@@ -28,15 +28,30 @@ passes=events %>%
   group_by(passer, team) %>% 
   summarise(avgX=mean(startX), avgY=mean(startY))
 
-clusterSolutionLength=kmeans(passes[,3],4, nstart = 100)
-clusterSolutionWidth=kmeans(passes[,4],3, nstart = 100)
+set.seed(1964)
+clusterSolutionLength=kmeans(avgPassPos[,3],4, nstart = 100)
+clusterSolutionWidth=kmeans(avgPassPos[,4],3, nstart = 100)
 
-passes$clustL=clusterSolutionLength$cluster
-passes$clustW=clusterSolutionWidth$cluster
+avgPassPos$clustL=clusterSolutionLength$cluster
+avgPassPos$clustW=clusterSolutionWidth$cluster
 
-passes$clust=paste(passes$clustL,"-",passes$clustW)
+avgPassPos$clust=paste(avgPassPos$clustL,"-",avgPassPos$clustW)
 
 simpleTeamShotMap=createOutline()+
-  geom_point(data=passes,aes(x=avgX,y=avgY, fill=as.factor(clust)), cex=3, pch=21)
+  geom_point(data=avgPassPos,aes(x=avgX,y=avgY, fill=as.factor(clust)), cex=3, pch=21)
 print(simpleTeamShotMap)
+
+positions=avgPassPos %>% 
+  mutate(position=case_when(
+    clust=="2 - 2" ~ "LW",
+    clust=="2 - 3" ~ "CF",
+    clust=="2 - 1" ~ "RF",
+    clust=="4 - 2" ~ "LD",
+    clust=="4 - 1" ~ "CD",
+    clust=="3 - 2" ~ "LM",
+    clust=="3 - 3" ~ "CM",
+    clust=="3 - 1" ~ "RM",
+    T ~ "GK"
+  )) %>% 
+  select(team, passer, position)
 
